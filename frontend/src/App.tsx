@@ -20,10 +20,12 @@ import {
 import YarnsPage from './pages/YarnsPage';
 import ProjectsPage from './pages/ProjectsPage';
 import { useState } from 'react';
-import type { Yarn } from './types';
-import { demoYarns } from './data/demo';
+import type { Yarn, Project } from './types';
+import { demoYarns, demoProjects } from './data/demo';
 import YarnDetailsPage from './pages/YarnDetailsPage';
 import YarnFormPage from './pages/YarnFormPage';
+import ProjectDetailsPage from './pages/ProjectDetailsPage';
+import ProjectFormPage from './pages/ProjectFormPage';
 
 const theme = createTheme({
   palette: {
@@ -48,6 +50,7 @@ const theme = createTheme({
 
 export default function App() {
     const [yarns, setYarns] = useState<Yarn[]>(demoYarns);
+    const [projects, setProjects] = useState<Project[]>(demoProjects);
 
     function saveYarn(savedYarn: Yarn) {
       setYarns((currentYarns) => {
@@ -62,6 +65,22 @@ export default function App() {
         }
 
         return [...currentYarns, savedYarn];
+      });
+    }
+
+    function saveProject(savedProject: Project) {
+      setProjects((currentProjects) => {
+        const exists = currentProjects.some(
+          (project) => project.id === savedProject.id,
+        );
+
+        if (exists) {
+          return currentProjects.map((project) =>
+            project.id === savedProject.id ? savedProject : project,
+          );
+        }
+
+        return [...currentProjects, savedProject];
       });
     }
 
@@ -137,7 +156,42 @@ export default function App() {
                 element={<YarnFormPage yarns={yarns} onSave={saveYarn} />}
               />
 
-              <Route path="/projects" element={<ProjectsPage />} />
+              <Route
+                path="/projects"
+                element={<ProjectsPage projects={projects} />}
+              />
+
+              <Route
+                path="/projects/new"
+                element={
+                  <ProjectFormPage
+                    projects={projects}
+                    yarns={yarns}
+                    onSave={saveProject}
+                  />
+                }
+              />
+
+              <Route
+                path="/projects/:id"
+                element={
+                  <ProjectDetailsPage
+                    projects={projects}
+                    yarns={yarns}
+                  />
+                }
+              />
+
+              <Route
+                path="/projects/:id/edit"
+                element={
+                  <ProjectFormPage
+                    projects={projects}
+                    yarns={yarns}
+                    onSave={saveProject}
+                  />
+                }
+              />
 
               <Route
                 path="*"

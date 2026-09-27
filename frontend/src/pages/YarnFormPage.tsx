@@ -237,7 +237,7 @@ function YarnForm({ initialYarn, onSave }: YarnFormProps) {
             </Button>
 
             <Button type="submit" variant="contained">
-              Сохранить пряжу
+              Сохранить
             </Button>
           </Stack>
         </Stack>

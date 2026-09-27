@@ -99,7 +99,7 @@ export default function YarnDetailsPage({ yarns }: YarnDetailsPageProps) {
             <strong>Количество:</strong> {yarn.quantity} шт
           </Typography>
 
-          <Typography variant="h7" component="h2">
+          <Typography variant="h6" component="h2">
             Заметки
           </Typography>
 
