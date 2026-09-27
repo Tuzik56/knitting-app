@@ -19,6 +19,11 @@ import {
 
 import YarnsPage from './pages/YarnsPage';
 import ProjectsPage from './pages/ProjectsPage';
+import { useState } from 'react';
+import type { Yarn } from './types';
+import { demoYarns } from './data/demo';
+import YarnDetailsPage from './pages/YarnDetailsPage';
+import YarnFormPage from './pages/YarnFormPage';
 
 const theme = createTheme({
   palette: {
@@ -42,6 +47,24 @@ const theme = createTheme({
 });
 
 export default function App() {
+    const [yarns, setYarns] = useState<Yarn[]>(demoYarns);
+
+    function saveYarn(savedYarn: Yarn) {
+      setYarns((currentYarns) => {
+        const exists = currentYarns.some(
+          (yarn) => yarn.id === savedYarn.id,
+        );
+
+        if (exists) {
+          return currentYarns.map((yarn) =>
+            yarn.id === savedYarn.id ? savedYarn : yarn,
+          );
+        }
+
+        return [...currentYarns, savedYarn];
+      });
+    }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -94,7 +117,25 @@ export default function App() {
                 element={<Navigate to="/yarns" replace />}
               />
 
-              <Route path="/yarns" element={<YarnsPage />} />
+              <Route
+                path="/yarns"
+                element={<YarnsPage yarns={yarns} />}
+              />
+
+              <Route
+                path="/yarns/new"
+                element={<YarnFormPage yarns={yarns} onSave={saveYarn} />}
+              />
+
+              <Route
+                path="/yarns/:id"
+                element={<YarnDetailsPage yarns={yarns} />}
+              />
+
+              <Route
+                path="/yarns/:id/edit"
+                element={<YarnFormPage yarns={yarns} onSave={saveYarn} />}
+              />
 
               <Route path="/projects" element={<ProjectsPage />} />
 

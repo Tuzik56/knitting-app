@@ -1,17 +1,53 @@
-import { Paper, Typography } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
+import { Link } from 'react-router-dom';
 
-export default function YarnsPage() {
+import YarnCard from '../components/YarnCard';
+import type { Yarn } from '../types';
+
+interface YarnsPageProps {
+  yarns: Yarn[];
+}
+
+export default function YarnsPage({ yarns }: YarnsPageProps) {
   return (
     <>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Пряжа
-      </Typography>
-
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Typography>
-          Здесь пряжа
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        spacing={2}
+        sx={{ mb: 3 }}
+      >
+        <Typography variant="h4" component="h1" gutterBottom>
+          Каталог пряжи
         </Typography>
-      </Paper>
+
+        <Button component={Link} to="/yarns/new" variant="contained">
+          Добавить пряжу
+        </Button>
+      </Stack>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, minmax(0, 1fr))',
+            md: 'repeat(3, minmax(0, 1fr))',
+          },
+          gap: 3,
+        }}
+      >
+        {yarns.map((yarn) => (
+          <YarnCard key={yarn.id} yarn={yarn} />
+        ))}
+      </Box>
+
+      {yarns.length === 0 && (
+        <Typography color="text.secondary">
+          Пусто
+        </Typography>
+      )}
     </>
   );
 }
