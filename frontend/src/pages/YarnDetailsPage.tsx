@@ -6,16 +6,31 @@ import {
   Typography,
 } from '@mui/material';
 
-import { Link, useParams } from 'react-router-dom';
-import type { Yarn } from '../types';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import type { Yarn, Project } from '../types';
+import { useState } from 'react';
+import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 
 interface YarnDetailsPageProps {
   yarns: Yarn[];
+  projects: Project[];
+  onDelete: (id: string) => boolean;
 }
 
-export default function YarnDetailsPage({ yarns }: YarnDetailsPageProps) {
+export default function YarnDetailsPage({ yarns, projects, onDelete }: YarnDetailsPageProps) {
   const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
   const yarn = yarns.find((item) => item.id === id);
+
+  const usedInProjects = projects.filter((project) =>
+    project.yarnIds.includes(id ?? ''),
+  );
+
+  const isUsed = usedInProjects.length > 0;
 
   if (!yarn) {
     return (
@@ -29,6 +44,21 @@ export default function YarnDetailsPage({ yarns }: YarnDetailsPageProps) {
         </Button>
       </Stack>
     );
+  }
+
+  function handleDelete() {
+    if (!yarn) {
+      return;
+    }
+
+    const deleted = onDelete(yarn.id);
+
+    if (!deleted) {
+      setDeleteError('Удаление недоступно: пряжа используется в проектах');
+      return;
+    }
+
+    navigate('/yarns', { replace: true });
   }
 
   return (
@@ -55,13 +85,29 @@ export default function YarnDetailsPage({ yarns }: YarnDetailsPageProps) {
           </Typography>
         </Box>
 
-        <Button
-          component={Link}
-          to={`/yarns/${yarn.id}/edit`}
-          variant="outlined"
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
         >
-          Редактировать
-        </Button>
+          <Button
+            component={Link}
+            to={`/yarns/${yarn.id}/edit`}
+            variant="outlined"
+          >
+            Редактировать
+          </Button>
+
+          <Button
+            color="error"
+            variant="outlined"
+            onClick={() => {
+              setDeleteError('');
+              setDeleteDialogOpen(true);
+            }}
+          >
+            Удалить
+          </Button>
+        </Stack>
       </Stack>
 
       <Paper variant="outlined" sx={{ p: 3 }}>
@@ -108,6 +154,42 @@ export default function YarnDetailsPage({ yarns }: YarnDetailsPageProps) {
           </Typography>
         </Stack>
       </Paper>
+
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        title={isUsed ? 'Удаление недоступно' : 'Удалить пряжу?'}
+        confirmDisabled={isUsed || Boolean(deleteError)}
+        description={
+          isUsed ? (
+            <>
+              <Typography>
+                Пряжа используется в проектах:
+              </Typography>
+
+              <Box component="ul" sx={{ mt: 1, mb: 0, pl: 3 }}>
+                {usedInProjects.map((project) => (
+                  <li key={project.id}>
+                    <Link
+                      to={`/projects/${project.id}`}
+                      style={{ textDecoration: 'underline' }}
+                    >
+                      {project.name}
+                    </Link>
+                  </li>
+                ))}
+              </Box>
+            </>
+          ) : deleteError ? (
+            <Typography>{deleteError}</Typography>
+          ) : (
+            <Typography>
+              Пряжа «{yarn.name}» будет удалена
+            </Typography>
+          )
+        }
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDelete}
+      />
     </Stack>
   );
 }

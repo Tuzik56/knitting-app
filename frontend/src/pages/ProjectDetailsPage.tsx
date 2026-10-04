@@ -8,18 +8,26 @@ import {
   Typography,
 } from '@mui/material';
 
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 
 import YarnCard from '../components/YarnCard';
 import type { Project, Yarn } from '../types';
 
+import { useState } from 'react';
+import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
+
 interface ProjectDetailsPageProps {
   projects: Project[];
   yarns: Yarn[];
+  onDelete: (id: string) => void;
 }
 
-export default function ProjectDetailsPage({ projects, yarns }: ProjectDetailsPageProps) {
+export default function ProjectDetailsPage({ projects, yarns, onDelete }: ProjectDetailsPageProps) {
   const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   const project = projects.find((item) => item.id === id);
 
   if (!project) {
@@ -34,6 +42,15 @@ export default function ProjectDetailsPage({ projects, yarns }: ProjectDetailsPa
         </Button>
       </Stack>
     );
+  }
+
+  function handleDelete() {
+    if (!project) {
+      return;
+    }
+
+    onDelete(project.id);
+    navigate('/projects', { replace: true });
   }
 
   const projectYarns = yarns.filter((yarn) =>
@@ -67,14 +84,27 @@ export default function ProjectDetailsPage({ projects, yarns }: ProjectDetailsPa
           </Typography>
         </Box>
 
-        <Button
-          component={Link}
-          to={`/projects/${project.id}/edit`}
-          variant="outlined"
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
           sx={{ flexShrink: 0 }}
         >
-          Редактировать
-        </Button>
+          <Button
+            component={Link}
+            to={`/projects/${project.id}/edit`}
+            variant="outlined"
+          >
+            Редактировать
+          </Button>
+
+          <Button
+            color="error"
+            variant="outlined"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            Удалить
+          </Button>
+        </Stack>
       </Stack>
 
       <Paper variant="outlined" sx={{ p: 3 }}>
@@ -138,6 +168,14 @@ export default function ProjectDetailsPage({ projects, yarns }: ProjectDetailsPa
           Пусто
         </Typography>
       )}
+
+    <DeleteConfirmDialog
+      open={deleteDialogOpen}
+      title="Удалить проект?"
+      description={`Проект «${project.name}» будет удалён`}
+      onClose={() => setDeleteDialogOpen(false)}
+      onConfirm={handleDelete}
+    />
     </Stack>
   );
 }

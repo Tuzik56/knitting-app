@@ -84,6 +84,28 @@ export default function App() {
       });
     }
 
+    function deleteYarn(id: string): boolean {
+      const isUsed = projects.some((project) =>
+        project.yarnIds.includes(id),
+      );
+
+      if (isUsed) {
+        return false;
+      }
+
+      setYarns((currentYarns) =>
+        currentYarns.filter((yarn) => yarn.id !== id),
+      );
+
+      return true;
+    }
+
+    function deleteProject(id: string) {
+      setProjects((currentProjects) =>
+        currentProjects.filter((project) => project.id !== id),
+      );
+    }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -148,7 +170,13 @@ export default function App() {
 
               <Route
                 path="/yarns/:id"
-                element={<YarnDetailsPage yarns={yarns} />}
+                element={
+                  <YarnDetailsPage
+                    yarns={yarns}
+                    projects={projects}
+                    onDelete={deleteYarn}
+                  />
+                }
               />
 
               <Route
@@ -178,6 +206,7 @@ export default function App() {
                   <ProjectDetailsPage
                     projects={projects}
                     yarns={yarns}
+                    onDelete={deleteProject}
                   />
                 }
               />
