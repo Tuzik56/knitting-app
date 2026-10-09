@@ -7,9 +7,10 @@ import {
 } from '@mui/material';
 
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import type { Yarn, Project } from '../types';
 import { useState } from 'react';
-import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
+import type { Yarn } from '../entities/yarn/types';
+import type { Project } from '../entities/project/types';
+import DeleteConfirmDialog from '../shared/ui/DeleteConfirmDialog';
 
 interface YarnDetailsPageProps {
   yarns: Yarn[];

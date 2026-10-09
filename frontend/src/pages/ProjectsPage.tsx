@@ -1,7 +1,8 @@
 import { Box, Typography, Button, Stack } from '@mui/material';
 
-import ProjectCard from '../components/ProjectCard';
-import type { Project } from '../types';
+import ProjectCard from '../entities/project/ProjectCard';
+import type { Project } from '../entities/project/types';
+
 import { Link } from 'react-router-dom';
 
 interface ProjectsPageProps {
@@ -50,7 +51,7 @@ export default function ProjectsPage({ projects }: ProjectsPageProps) {
 
       {projects.length === 0 && (
         <Typography color="text.secondary">
-          Пусто
+          У вас пока нет проектов. Нажмите «Новый проект», чтобы добавить первое изделие
         </Typography>
       )}
     </>

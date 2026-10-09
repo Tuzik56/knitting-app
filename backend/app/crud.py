@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .models import Project, Yarn, project_yarns
+from .models import Project, ProjectYarn, Yarn
 from .schemas import ProjectWrite, YarnWrite
 
 
@@ -32,8 +32,8 @@ def update_yarn(db: Session, yarn: Yarn, data: YarnWrite):
 
 def yarn_is_used(db: Session, yarn_id: int):
     query = (
-        select(project_yarns.c.project_id)
-        .where(project_yarns.c.yarn_id == yarn_id)
+        select(ProjectYarn.project_id)
+        .where(ProjectYarn.yarn_id == yarn_id)
         .limit(1)
     )
     return db.execute(query).first() is not None

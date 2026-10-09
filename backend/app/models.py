@@ -1,10 +1,8 @@
 from sqlalchemy import (
     CheckConstraint,
-    Column,
     ForeignKey,
     Integer,
     String,
-    Table,
     Text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -12,20 +10,18 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .database import Base
 
 
-project_yarns = Table(
-    "project_yarns",
-    Base.metadata,
-    Column(
-        "project_id",
+class ProjectYarn(Base):
+    __tablename__ = "project_yarns"
+
+    project_id: Mapped[int] = mapped_column(
         ForeignKey("projects.id", ondelete="CASCADE"),
         primary_key=True,
-    ),
-    Column(
-        "yarn_id",
+    )
+
+    yarn_id: Mapped[int] = mapped_column(
         ForeignKey("yarns.id", ondelete="RESTRICT"),
         primary_key=True,
-    ),
-)
+    )
 
 
 class Yarn(Base):
@@ -48,7 +44,7 @@ class Yarn(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
 
     projects: Mapped[list["Project"]] = relationship(
-        secondary=project_yarns,
+        secondary=ProjectYarn.__table__,
         back_populates="yarns",
         passive_deletes="all",
     )
@@ -76,7 +72,7 @@ class Project(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
 
     yarns: Mapped[list["Yarn"]] = relationship(
-        secondary=project_yarns,
+        secondary=ProjectYarn.__table__,
         back_populates="projects",
         passive_deletes=True,
     )

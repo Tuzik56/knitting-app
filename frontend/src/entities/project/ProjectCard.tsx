@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 
 import { Link } from 'react-router-dom';
-import type { Project } from '../types';
+import type { Project } from './types';
 
 interface ProjectCardProps {
   project: Project;

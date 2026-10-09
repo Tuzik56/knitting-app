@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 
 import { Link } from 'react-router-dom';
-import type { Yarn } from '../types';
+import type { Yarn } from './types';
 
 interface YarnCardProps {
   yarn: Yarn;

@@ -10,11 +10,12 @@ import {
 
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
-import YarnCard from '../components/YarnCard';
-import type { Project, Yarn } from '../types';
+import type { Project } from '../entities/project/types';
+import type { Yarn } from '../entities/yarn/types';
+import YarnCard from '../entities/yarn/YarnCard';
+import DeleteConfirmDialog from '../shared/ui/DeleteConfirmDialog';
 
 import { useState } from 'react';
-import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 
 interface ProjectDetailsPageProps {
   projects: Project[];

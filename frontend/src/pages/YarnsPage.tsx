@@ -1,8 +1,8 @@
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
 
-import YarnCard from '../components/YarnCard';
-import type { Yarn } from '../types';
+import YarnCard from '../entities/yarn/YarnCard';
+import type { Yarn } from '../entities/yarn/types';
 
 interface YarnsPageProps {
   yarns: Yarn[];
@@ -45,7 +45,7 @@ export default function YarnsPage({ yarns }: YarnsPageProps) {
 
       {yarns.length === 0 && (
         <Typography color="text.secondary">
-          Пусто
+          В каталоге пока нет пряжи. Нажмите «Добавить пряжу», чтобы создать первую карточку
         </Typography>
       )}
     </>
