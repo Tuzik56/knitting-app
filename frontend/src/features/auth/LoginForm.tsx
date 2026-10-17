@@ -13,6 +13,7 @@ import {
 interface LoginFormProps {
   initialUsername?: string;
   successMessage?: string;
+  sessionMessage?: string;
   onRegister: () => void;
   onLogin: (username: string, password: string) => Promise<void>;
 }
@@ -22,6 +23,7 @@ export default function LoginForm({
   onRegister,
   initialUsername = '',
   successMessage = '',
+  sessionMessage = '',
 }: LoginFormProps) {
   const [username, setUsername] = useState(initialUsername);
   const [password, setPassword] = useState('');
@@ -67,6 +69,7 @@ export default function LoginForm({
           </Typography>
 
           {successMessage && <Alert severity="success">{successMessage}</Alert>}
+          {sessionMessage && <Alert severity="warning">{sessionMessage}</Alert>}
           {error && <Alert severity="error">{error}</Alert>}
 
           <TextField

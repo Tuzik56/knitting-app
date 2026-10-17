@@ -255,14 +255,21 @@ export default function App() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [registeredUsername, setRegisteredUsername] = useState('');
   const [registrationMessage, setRegistrationMessage] = useState('');
+  const [sessionMessage, setSessionMessage] = useState('');
 
   async function handleLogin(username: string, password: string) {
     const nextSession = await signIn(
       username,
       password,
-      () => setSession(null),
+      () => {
+        setSessionMessage('Сессия истекла. Войдите заново.');
+        setRegistrationMessage('');
+        setAuthMode('login');
+        setSession(null);
+      },
     );
 
+    setSessionMessage('');
     setRegistrationMessage('');
     setSession(nextSession);
   }
@@ -292,8 +299,10 @@ export default function App() {
         <LoginForm
           initialUsername={registeredUsername}
           successMessage={registrationMessage}
+          sessionMessage={sessionMessage}
           onLogin={handleLogin}
           onRegister={() => {
+            setSessionMessage('');
             setRegistrationMessage('');
             setAuthMode('register');
           }}
