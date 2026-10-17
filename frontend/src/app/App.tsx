@@ -29,8 +29,20 @@ import ProjectFormPage from '../pages/ProjectFormPage';
 
 import { useKnittingData } from './useKnittingData';
 
+import { useState } from 'react';
+import LoginForm from '../features/auth/LoginForm';
+import RegisterForm from '../features/auth/RegisterForm';
+import { signIn } from '../shared/api/client';
+import type { AuthSession } from '../shared/api/client';
 
-export default function App() {
+
+function Workspace({
+  session,
+  onLogout,
+}: {
+  session: AuthSession;
+  onLogout: () => void;
+}) {
   const {
     yarns,
     projects,
@@ -41,7 +53,28 @@ export default function App() {
     saveProject,
     deleteYarn,
     deleteProject,
-  } = useKnittingData();
+  } = useKnittingData(session);
+
+  const [logoutError, setLogoutError] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    if (loggingOut) return;
+
+    setLoggingOut(true);
+    setLogoutError('');
+
+    try {
+      await session.logout();
+      onLogout();
+    } catch (error) {
+      setLogoutError(
+        error instanceof Error ? error.message : 'Не удалось выйти.',
+      );
+    } finally {
+      setLoggingOut(false);
+    }
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -56,6 +89,24 @@ export default function App() {
           >
             Название сайта
           </Typography>
+
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+              sx={{ mb: 2 }}
+            >
+              <Typography>{session.user.username}</Typography>
+              <Button onClick={handleLogout} disabled={loggingOut}>
+                {loggingOut ? 'Выход…' : 'Выйти'}
+              </Button>
+            </Stack>
+
+            {logoutError && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {logoutError}
+              </Alert>
+            )}
 
           <Stack
             component="nav"
@@ -111,7 +162,6 @@ export default function App() {
               )}
 
             {status === 'success' && (
-
               <Routes>
                 <Route
                   path="/"
@@ -195,6 +245,60 @@ export default function App() {
           </Box>
         </Container>
       </BrowserRouter>
+    </ThemeProvider>
+  );
+}
+
+
+export default function App() {
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [registeredUsername, setRegisteredUsername] = useState('');
+  const [registrationMessage, setRegistrationMessage] = useState('');
+
+  async function handleLogin(username: string, password: string) {
+    const nextSession = await signIn(
+      username,
+      password,
+      () => setSession(null),
+    );
+
+    setRegistrationMessage('');
+    setSession(nextSession);
+  }
+
+  if (session) {
+    return (
+      <Workspace
+        session={session}
+        onLogout={() => setSession(null)}
+      />
+    );
+  }
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {authMode === 'register' ? (
+        <RegisterForm
+          onLogin={() => setAuthMode('login')}
+          onRegistered={(username) => {
+            setRegisteredUsername(username);
+            setRegistrationMessage('Аккаунт создан. Введите пароль, чтобы войти.');
+            setAuthMode('login');
+          }}
+        />
+      ) : (
+        <LoginForm
+          initialUsername={registeredUsername}
+          successMessage={registrationMessage}
+          onLogin={handleLogin}
+          onRegister={() => {
+            setRegistrationMessage('');
+            setAuthMode('register');
+          }}
+        />
+      )}
     </ThemeProvider>
   );
 }

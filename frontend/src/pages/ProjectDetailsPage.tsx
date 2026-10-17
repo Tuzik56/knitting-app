@@ -20,7 +20,7 @@ import { useState } from 'react';
 interface ProjectDetailsPageProps {
   projects: Project[];
   yarns: Yarn[];
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
 }
 
 export default function ProjectDetailsPage({ projects, yarns, onDelete }: ProjectDetailsPageProps) {
@@ -28,6 +28,8 @@ export default function ProjectDetailsPage({ projects, yarns, onDelete }: Projec
   const navigate = useNavigate();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const project = projects.find((item) => item.id === id);
 
@@ -45,13 +47,22 @@ export default function ProjectDetailsPage({ projects, yarns, onDelete }: Projec
     );
   }
 
-  function handleDelete() {
-    if (!project) {
-      return;
-    }
+  async function handleDelete() {
+    if (!project || deleting) return;
 
-    onDelete(project.id);
-    navigate('/projects', { replace: true });
+    setDeleting(true);
+    setDeleteError('');
+
+    try {
+      await onDelete(project.id);
+      navigate('/projects', { replace: true });
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error ? error.message : 'Не удалось удалить проект.',
+      );
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const projectYarns = yarns.filter((yarn) =>
@@ -101,7 +112,10 @@ export default function ProjectDetailsPage({ projects, yarns, onDelete }: Projec
           <Button
             color="error"
             variant="outlined"
-            onClick={() => setDeleteDialogOpen(true)}
+            onClick={() => {
+              setDeleteError('');
+              setDeleteDialogOpen(true);
+            }}
           >
             Удалить
           </Button>
@@ -173,8 +187,14 @@ export default function ProjectDetailsPage({ projects, yarns, onDelete }: Projec
     <DeleteConfirmDialog
       open={deleteDialogOpen}
       title="Удалить проект?"
-      description={`Проект «${project.name}» будет удалён`}
-      onClose={() => setDeleteDialogOpen(false)}
+      confirmDisabled={deleting}
+      description={deleteError || `Проект «${project.name}» будет удалён`}
+      onClose={() => {
+          if (!deleting) {
+            setDeleteDialogOpen(false);
+            setDeleteError('');
+          }
+        }}
       onConfirm={handleDelete}
     />
     </Stack>

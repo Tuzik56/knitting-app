@@ -8,7 +8,7 @@ import ProjectForm from '../features/project-form/ProjectForm';
 interface ProjectFormPageProps {
   projects: Project[];
   yarns: Yarn[];
-  onSave: (project: Project) => void;
+  onSave: (project: Project) => Promise<Project>;
 }
 
 export default function ProjectFormPage({

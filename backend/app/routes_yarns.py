@@ -5,12 +5,18 @@ from sqlalchemy.orm import Session
 from . import crud
 from .database import get_db
 from .schemas import YarnRead, YarnWrite
+from .dependencies import get_current_user
+from .models import User
 
 router = APIRouter(prefix="/yarns", tags=["Пряжа"])
 
 
-def find_yarn_or_404(db: Session, yarn_id: int):
-    yarn = crud.get_yarn(db, yarn_id)
+def find_yarn_or_404(
+    db: Session,
+    yarn_id: int,
+    owner_id: int,
+):
+    yarn = crud.get_yarn(db, yarn_id, owner_id)
 
     if yarn is None:
         raise HTTPException(
@@ -22,18 +28,29 @@ def find_yarn_or_404(db: Session, yarn_id: int):
 
 
 @router.get("", response_model=list[YarnRead])
-def list_yarns(db: Session = Depends(get_db)):
-    return crud.get_yarns(db)
+def list_yarns(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return crud.get_yarns(db, current_user.id)
 
 
 @router.get("/{yarn_id}", response_model=YarnRead)
-def read_yarn(yarn_id: int, db: Session = Depends(get_db)):
-    return find_yarn_or_404(db, yarn_id)
+def read_yarn(
+        yarn_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+):
+    return find_yarn_or_404(db, yarn_id, current_user.id)
 
 
 @router.post("", response_model=YarnRead, status_code=201)
-def create_yarn(data: YarnWrite, db: Session = Depends(get_db)):
-    return crud.create_yarn(db, data)
+def create_yarn(
+    data: YarnWrite,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return crud.create_yarn(db, data, current_user.id)
 
 
 @router.put("/{yarn_id}", response_model=YarnRead)
@@ -41,14 +58,19 @@ def update_yarn(
     yarn_id: int,
     data: YarnWrite,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    yarn = find_yarn_or_404(db, yarn_id)
+    yarn = find_yarn_or_404(db, yarn_id, current_user.id)
     return crud.update_yarn(db, yarn, data)
 
 
 @router.delete("/{yarn_id}", status_code=204)
-def delete_yarn(yarn_id: int, db: Session = Depends(get_db)):
-    yarn = find_yarn_or_404(db, yarn_id)
+def delete_yarn(
+    yarn_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    yarn = find_yarn_or_404(db, yarn_id, current_user.id)
 
     if crud.yarn_is_used(db, yarn_id):
         raise HTTPException(

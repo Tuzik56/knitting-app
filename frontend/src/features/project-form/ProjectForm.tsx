@@ -28,7 +28,7 @@ import type { Yarn } from '../../entities/yarn/types';
 interface ProjectFormProps {
   initialProject?: Project;
   yarns: Yarn[];
-  onSave: (project: Project) => void;
+  onSave: (project: Project) => Promise<Project>;
 }
 
 export default function ProjectForm({
@@ -53,6 +53,7 @@ export default function ProjectForm({
   );
   const [notes, setNotes] = useState(initialProject?.notes ?? '');
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const cancelPath = initialProject
     ? `/projects/${initialProject.id}`
@@ -98,8 +99,9 @@ export default function ProjectForm({
     });
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (saving) return;
     setError('');
 
     if (!name.trim()) {
@@ -127,7 +129,7 @@ export default function ProjectForm({
     }
 
     const savedProject: Project = {
-      id: initialProject?.id ?? crypto.randomUUID(),
+      id: initialProject?.id ?? '',
       name: name.trim(),
       description: description.trim(),
       status,
@@ -136,8 +138,18 @@ export default function ProjectForm({
       notes: notes.trim(),
     };
 
-    onSave(savedProject);
-    navigate(`/projects/${savedProject.id}`);
+    setSaving(true);
+
+    try {
+      const result = await onSave(savedProject);
+      navigate(`/projects/${result.id}`);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : 'Не удалось сохранить проект.',
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -259,12 +271,12 @@ export default function ProjectForm({
             justifyContent="flex-end"
             spacing={1}
           >
-            <Button component={Link} to={cancelPath}>
+            <Button component={Link} to={cancelPath} disabled={saving}>
               Отмена
             </Button>
 
-            <Button type="submit" variant="contained">
-              Сохранить
+            <Button type="submit" variant="contained" disabled={saving}>
+              {saving ? 'Сохранение…' : 'Сохранить'}
             </Button>
           </Stack>
         </Stack>

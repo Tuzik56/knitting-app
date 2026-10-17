@@ -15,7 +15,7 @@ import DeleteConfirmDialog from '../shared/ui/DeleteConfirmDialog';
 interface YarnDetailsPageProps {
   yarns: Yarn[];
   projects: Project[];
-  onDelete: (id: string) => boolean;
+  onDelete: (id: string) => Promise<void>;
 }
 
 export default function YarnDetailsPage({ yarns, projects, onDelete }: YarnDetailsPageProps) {
@@ -23,6 +23,7 @@ export default function YarnDetailsPage({ yarns, projects, onDelete }: YarnDetai
   const navigate = useNavigate();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
   const yarn = yarns.find((item) => item.id === id);
@@ -47,19 +48,22 @@ export default function YarnDetailsPage({ yarns, projects, onDelete }: YarnDetai
     );
   }
 
-  function handleDelete() {
-    if (!yarn) {
-      return;
+  async function handleDelete() {
+    if (!yarn || deleting) return;
+
+    setDeleting(true);
+    setDeleteError('');
+
+    try {
+      await onDelete(yarn.id);
+      navigate('/yarns', { replace: true });
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error ? error.message : 'Не удалось удалить пряжу.',
+      );
+    } finally {
+      setDeleting(false);
     }
-
-    const deleted = onDelete(yarn.id);
-
-    if (!deleted) {
-      setDeleteError('Удаление недоступно: пряжа используется в проектах');
-      return;
-    }
-
-    navigate('/yarns', { replace: true });
   }
 
   return (
@@ -159,7 +163,7 @@ export default function YarnDetailsPage({ yarns, projects, onDelete }: YarnDetai
       <DeleteConfirmDialog
         open={deleteDialogOpen}
         title={isUsed ? 'Удаление недоступно' : 'Удалить пряжу?'}
-        confirmDisabled={isUsed || Boolean(deleteError)}
+        confirmDisabled={isUsed || deleting}
         description={
           isUsed ? (
             <>
@@ -188,7 +192,12 @@ export default function YarnDetailsPage({ yarns, projects, onDelete }: YarnDetai
             </Typography>
           )
         }
-        onClose={() => setDeleteDialogOpen(false)}
+        onClose={() => {
+          if (!deleting) {
+            setDeleteDialogOpen(false);
+            setDeleteError('');
+          }
+        }}
         onConfirm={handleDelete}
       />
     </Stack>

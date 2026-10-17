@@ -6,7 +6,7 @@ import YarnForm from '../features/yarn-form/YarnForm';
 
 interface YarnFormPageProps {
   yarns: Yarn[];
-  onSave: (yarn: Yarn) => void;
+  onSave: (yarn: Yarn) => Promise<Yarn>;
 }
 
 export default function YarnFormPage({ yarns, onSave }: YarnFormPageProps) {

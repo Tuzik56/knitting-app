@@ -1,13 +1,31 @@
 import { useEffect, useState } from 'react';
 
+import type { AuthSession } from '../shared/api/client';
 import type { Yarn } from '../entities/yarn/types';
 import type { Project } from '../entities/project/types';
 
-import { loadDemoData } from './loadDemoData';
-
 type LoadingStatus = 'loading' | 'success' | 'error';
 
-export function useKnittingData() {
+type YarnResponse = Omit<Yarn, 'id'> & { id: number };
+
+type ProjectResponse = Omit<Project, 'id' | 'yarnIds'> & {
+  id: number;
+  yarnIds: number[];
+};
+
+function toYarn(data: YarnResponse): Yarn {
+  return { ...data, id: String(data.id) };
+}
+
+function toProject(data: ProjectResponse): Project {
+  return {
+    ...data,
+    id: String(data.id),
+    yarnIds: data.yarnIds.map(String),
+  };
+}
+
+export function useKnittingData(session: AuthSession) {
   const [yarns, setYarns] = useState<Yarn[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [status, setStatus] = useState<LoadingStatus>('loading');
@@ -19,14 +37,17 @@ export function useKnittingData() {
 
     async function load() {
       try {
-        const data = await loadDemoData();
+        const [yarnData, projectData] = await Promise.all([
+          session.request<YarnResponse[]>('/yarns'),
+          session.request<ProjectResponse[]>('/projects'),
+        ]);
 
         if (ignore) return;
 
-        setYarns(data.yarns);
-        setProjects(data.projects);
+        setYarns(yarnData.map(toYarn));
+        setProjects(projectData.map(toProject));
         setStatus('success');
-      } catch (error: unknown) {
+      } catch (error) {
         if (ignore) return;
 
         setError(
@@ -43,7 +64,7 @@ export function useKnittingData() {
     return () => {
       ignore = true;
     };
-  }, [attempt]);
+  }, [session, attempt]);
 
   function retry() {
     setError('');
@@ -51,58 +72,67 @@ export function useKnittingData() {
     setAttempt((current) => current + 1);
   }
 
-  function saveYarn(savedYarn: Yarn) {
-    setYarns((currentYarns) => {
-      const exists = currentYarns.some(
-        (yarn) => yarn.id === savedYarn.id,
-      );
+  async function saveYarn(data: Yarn): Promise<Yarn> {
+    const { id, ...body } = data;
 
-      if (exists) {
-        return currentYarns.map((yarn) =>
-          yarn.id === savedYarn.id ? savedYarn : yarn,
-        );
-      }
+    const saved = toYarn(
+      await session.request<YarnResponse>(
+        id ? `/yarns/${id}` : '/yarns',
+        {
+          method: id ? 'PUT' : 'POST',
+          body: JSON.stringify(body),
+        },
+      ),
+    );
 
-      return [...currentYarns, savedYarn];
+    setYarns((current) =>
+      id
+        ? current.map((item) => (item.id === id ? saved : item))
+        : [...current, saved],
+    );
+
+    return saved;
+  }
+
+  async function saveProject(data: Project): Promise<Project> {
+    const { id, yarnIds, ...fields } = data;
+
+    const saved = toProject(
+      await session.request<ProjectResponse>(
+        id ? `/projects/${id}` : '/projects',
+        {
+          method: id ? 'PUT' : 'POST',
+          body: JSON.stringify({
+            ...fields,
+            yarnIds: yarnIds.map(Number),
+          }),
+        },
+      ),
+    );
+
+    setProjects((current) =>
+      id
+        ? current.map((item) => (item.id === id ? saved : item))
+        : [...current, saved],
+    );
+
+    return saved;
+  }
+
+  async function deleteYarn(id: string): Promise<void> {
+    await session.request<void>(`/yarns/${id}`, {
+      method: 'DELETE',
     });
+
+    setYarns((current) => current.filter((item) => item.id !== id));
   }
 
-  function saveProject(savedProject: Project) {
-    setProjects((currentProjects) => {
-      const exists = currentProjects.some(
-        (project) => project.id === savedProject.id,
-      );
-
-      if (exists) {
-        return currentProjects.map((project) =>
-          project.id === savedProject.id ? savedProject : project,
-        );
-      }
-
-      return [...currentProjects, savedProject];
+  async function deleteProject(id: string): Promise<void> {
+    await session.request<void>(`/projects/${id}`, {
+      method: 'DELETE',
     });
-  }
 
-  function deleteYarn(id: string): boolean {
-    const isUsed = projects.some((project) =>
-      project.yarnIds.includes(id),
-    );
-
-    if (isUsed) {
-      return false;
-    }
-
-    setYarns((currentYarns) =>
-      currentYarns.filter((yarn) => yarn.id !== id),
-    );
-
-    return true;
-  }
-
-  function deleteProject(id: string) {
-    setProjects((currentProjects) =>
-      currentProjects.filter((project) => project.id !== id),
-    );
+    setProjects((current) => current.filter((item) => item.id !== id));
   }
 
   return {
